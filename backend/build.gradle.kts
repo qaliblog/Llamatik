@@ -46,7 +46,7 @@ dependencies {
     implementation(libs.hikariCP)
     implementation(libs.swagger.codegen)
 
-    //testImplementation(libs.ktor.server.tests.jvm)
+    testImplementation(libs.ktor.server.tests.jvm)
     testImplementation(libs.kotlin.test.junit)
 }
 
