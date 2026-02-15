@@ -2,7 +2,7 @@ name: Build Backend
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "**" ]
     paths:
       - 'backend/**'
       - 'library/**'
@@ -10,7 +10,7 @@ on:
       - 'settings.gradle.kts'
       - 'gradle/**'
   pull_request:
-    branches: [ "master" ]
+    branches: [ "**" ]
     paths:
       - 'backend/**'
       - 'library/**'
