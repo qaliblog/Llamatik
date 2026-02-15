@@ -2,6 +2,7 @@ package com.llamatik
 
 import com.llamatik.routes.embeddingRoutes
 import com.llamatik.routes.generationRoutes
+import com.llamatik.routes.providerRoutes
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -28,9 +29,8 @@ fun Application.configureGeneralRouting() {
         embeddingRoutes()
         generationRoutes()
 
-        // --- Llamatik LLM API ---
-        embeddingRoutes()
-        generationRoutes()
+        // Provider-compatible APIs (OpenAI, Ollama)
+        providerRoutes()
 
         openAPI(path = "openapi", swaggerFile = "openapi/documentation.yaml") {
             codegen = StaticHtmlCodegen()
