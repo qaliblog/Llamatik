@@ -21,8 +21,9 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.UUID
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -72,7 +73,7 @@ fun Route.openAiRoutes() {
 
                 val response = ChatCompletionResponse(
                     id = "chatcmpl-" + UUID.randomUUID().toString(),
-                    created = Clock.System.now().epochSeconds,
+                    created = Instant.now().epochSecond,
                     model = req.model,
                     choices = listOf(
                         ChatChoice(
@@ -100,7 +101,7 @@ fun Route.ollamaRoutes() {
             onSuccess = { text ->
                 val response = OllamaGenerateResponse(
                     model = req.model,
-                    createdAt = Clock.System.now().toString(),
+                    createdAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
                     response = text,
                     done = true
                 )
@@ -144,7 +145,7 @@ fun Route.ollamaRoutes() {
 
                 val response = OllamaChatResponse(
                     model = req.model,
-                    createdAt = Clock.System.now().toString(),
+                    createdAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
                     message = message,
                     done = true
                 )
