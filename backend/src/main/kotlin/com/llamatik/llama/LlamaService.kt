@@ -14,45 +14,57 @@ import kotlinx.coroutines.sync.withLock
  */
 @Suppress("TooManyFunctions")
 object LlamaService {
-
     private val mutex = Mutex()
 
     /** Initialize an embedding-capable model. */
-    suspend fun initModel(modelPath: String): Result<Boolean> = runCatching {
-        mutex.withLock { LlamaBridge.initModel(modelPath) }
-    }
+    suspend fun initModel(modelPath: String): Result<Boolean> =
+        runCatching {
+            mutex.withLock { LlamaBridge.initModel(modelPath) }
+        }
 
     /** Compute embeddings for a single input. */
-    suspend fun embed(input: String): Result<FloatArray> = runCatching {
-        mutex.withLock { LlamaBridge.embed(input) }
-    }
+    suspend fun embed(input: String): Result<FloatArray> =
+        runCatching {
+            mutex.withLock { LlamaBridge.embed(input) }
+        }
 
     /** Initialize a generation-capable model. */
-    suspend fun initGenerateModel(modelPath: String): Result<Boolean> = runCatching {
-        mutex.withLock { LlamaBridge.initGenerateModel(modelPath) }
-    }
+    suspend fun initGenerateModel(modelPath: String): Result<Boolean> =
+        runCatching {
+            mutex.withLock { LlamaBridge.initGenerateModel(modelPath) }
+        }
 
-    suspend fun generate(prompt: String): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generate(prompt) }
-    }
+    suspend fun generate(prompt: String): Result<String> =
+        runCatching {
+            mutex.withLock { LlamaBridge.generate(prompt) }
+        }
 
-    suspend fun generateWithContext(systemPrompt: String, contextBlock: String, userPrompt: String): Result<String> =
+    suspend fun generateWithContext(
+        systemPrompt: String,
+        contextBlock: String,
+        userPrompt: String,
+    ): Result<String> =
         runCatching {
             mutex.withLock { LlamaBridge.generateWithContext(systemPrompt, contextBlock, userPrompt) }
         }
 
-    suspend fun generateJson(prompt: String, jsonSchema: String?): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generateJson(prompt, jsonSchema) }
-    }
+    suspend fun generateJson(
+        prompt: String,
+        jsonSchema: String?,
+    ): Result<String> =
+        runCatching {
+            mutex.withLock { LlamaBridge.generateJson(prompt, jsonSchema) }
+        }
 
     suspend fun generateJsonWithContext(
         systemPrompt: String,
         contextBlock: String,
         userPrompt: String,
-        jsonSchema: String?
-    ): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generateJsonWithContext(systemPrompt, contextBlock, userPrompt, jsonSchema) }
-    }
+        jsonSchema: String?,
+    ): Result<String> =
+        runCatching {
+            mutex.withLock { LlamaBridge.generateJsonWithContext(systemPrompt, contextBlock, userPrompt, jsonSchema) }
+        }
 
     suspend fun updateGenerateParams(
         temperature: Float,
@@ -60,17 +72,18 @@ object LlamaService {
         topP: Float,
         topK: Int,
         repeatPenalty: Float,
-    ): Result<Unit> = runCatching {
-        mutex.withLock {
-            LlamaBridge.updateGenerateParams(
-                temperature = temperature,
-                maxTokens = maxTokens,
-                topP = topP,
-                topK = topK,
-                repeatPenalty = repeatPenalty,
-            )
+    ): Result<Unit> =
+        runCatching {
+            mutex.withLock {
+                LlamaBridge.updateGenerateParams(
+                    temperature = temperature,
+                    maxTokens = maxTokens,
+                    topP = topP,
+                    topK = topK,
+                    repeatPenalty = repeatPenalty,
+                )
+            }
         }
-    }
 
     /**
      * Streaming generation using the native callback.
@@ -79,15 +92,27 @@ object LlamaService {
      * If your JNI implementation is re-entrant, you may remove other locks. If it is *not*, consider
      * surrounding this call with [mutex] too.
      */
-    fun generateStream(prompt: String, callback: GenStream) {
+    fun generateStream(
+        prompt: String,
+        callback: GenStream,
+    ) {
         LlamaBridge.generateStream(prompt, callback)
     }
 
-    fun generateStreamWithContext(systemPrompt: String, contextBlock: String, userPrompt: String, callback: GenStream) {
+    fun generateStreamWithContext(
+        systemPrompt: String,
+        contextBlock: String,
+        userPrompt: String,
+        callback: GenStream,
+    ) {
         LlamaBridge.generateStreamWithContext(systemPrompt, contextBlock, userPrompt, callback)
     }
 
-    fun generateJsonStream(prompt: String, jsonSchema: String?, callback: GenStream) {
+    fun generateJsonStream(
+        prompt: String,
+        jsonSchema: String?,
+        callback: GenStream,
+    ) {
         LlamaBridge.generateJsonStream(prompt, jsonSchema, callback)
     }
 
@@ -96,16 +121,18 @@ object LlamaService {
         contextBlock: String,
         userPrompt: String,
         jsonSchema: String?,
-        callback: GenStream
+        callback: GenStream,
     ) {
         LlamaBridge.generateJsonStreamWithContext(systemPrompt, contextBlock, userPrompt, jsonSchema, callback)
     }
 
-    suspend fun cancelGenerate(): Result<Unit> = runCatching {
-        mutex.withLock { LlamaBridge.nativeCancelGenerate() }
-    }
+    suspend fun cancelGenerate(): Result<Unit> =
+        runCatching {
+            mutex.withLock { LlamaBridge.nativeCancelGenerate() }
+        }
 
-    suspend fun shutdown(): Result<Unit> = runCatching {
-        mutex.withLock { LlamaBridge.shutdown() }
-    }
+    suspend fun shutdown(): Result<Unit> =
+        runCatching {
+            mutex.withLock { LlamaBridge.shutdown() }
+        }
 }

@@ -18,7 +18,7 @@ data class ChatCompletionRequest(
     @SerialName("max_tokens") val maxTokens: Int? = null,
     val tools: List<Tool>? = null,
     @SerialName("tool_choice") val toolChoice: JsonElement? = null,
-    @SerialName("response_format") val responseFormat: ResponseFormat? = null
+    @SerialName("response_format") val responseFormat: ResponseFormat? = null,
 )
 
 @Serializable
@@ -27,39 +27,39 @@ data class ChatMessage(
     val content: String? = null,
     val name: String? = null,
     @SerialName("tool_calls") val toolCalls: List<ToolCall>? = null,
-    @SerialName("tool_call_id") val toolCallId: String? = null
+    @SerialName("tool_call_id") val toolCallId: String? = null,
 )
 
 @Serializable
 data class Tool(
     val type: String,
-    val function: FunctionDefinition
+    val function: FunctionDefinition,
 )
 
 @Serializable
 data class FunctionDefinition(
     val name: String,
     val description: String? = null,
-    val parameters: JsonElement? = null
+    val parameters: JsonElement? = null,
 )
 
 @Serializable
 data class ToolCall(
     val id: String,
     val type: String,
-    val function: FunctionCall
+    val function: FunctionCall,
 )
 
 @Serializable
 data class FunctionCall(
     val name: String,
-    val arguments: String
+    val arguments: String,
 )
 
 @Serializable
 data class ResponseFormat(
     val type: String,
-    @SerialName("json_schema") val jsonSchema: JsonElement? = null
+    @SerialName("json_schema") val jsonSchema: JsonElement? = null,
 )
 
 @Serializable
@@ -69,21 +69,21 @@ data class ChatCompletionResponse(
     val created: Long,
     val model: String,
     val choices: List<ChatChoice>,
-    val usage: ChatUsage? = null
+    val usage: ChatUsage? = null,
 )
 
 @Serializable
 data class ChatChoice(
     val index: Int,
     val message: ChatMessage,
-    @SerialName("finish_reason") val finishReason: String? = null
+    @SerialName("finish_reason") val finishReason: String? = null,
 )
 
 @Serializable
 data class ChatUsage(
     @SerialName("prompt_tokens") val promptTokens: Int,
     @SerialName("completion_tokens") val completionTokens: Int,
-    @SerialName("total_tokens") val totalTokens: Int
+    @SerialName("total_tokens") val totalTokens: Int,
 )
 
 // --- Ollama DTOs ---
@@ -98,7 +98,7 @@ data class OllamaGenerateRequest(
     val stream: Boolean? = true,
     val raw: Boolean? = false,
     val format: String? = null,
-    val options: Map<String, JsonElement>? = null
+    val options: Map<String, JsonElement>? = null,
 )
 
 @Serializable
@@ -111,7 +111,7 @@ data class OllamaGenerateResponse(
     @SerialName("total_duration") val totalDuration: Long? = null,
     @SerialName("load_duration") val loadDuration: Long? = null,
     @SerialName("prompt_eval_count") val promptEvalCount: Int? = null,
-    @SerialName("eval_count") val evalCount: Int? = null
+    @SerialName("eval_count") val evalCount: Int? = null,
 )
 
 @Serializable
@@ -121,7 +121,7 @@ data class OllamaChatRequest(
     val stream: Boolean? = true,
     val format: String? = null,
     val tools: List<Tool>? = null,
-    val options: Map<String, JsonElement>? = null
+    val options: Map<String, JsonElement>? = null,
 )
 
 @Serializable
@@ -133,5 +133,5 @@ data class OllamaChatResponse(
     @SerialName("total_duration") val totalDuration: Long? = null,
     @SerialName("load_duration") val loadDuration: Long? = null,
     @SerialName("prompt_eval_count") val promptEvalCount: Int? = null,
-    @SerialName("eval_count") val evalCount: Int? = null
+    @SerialName("eval_count") val evalCount: Int? = null,
 )

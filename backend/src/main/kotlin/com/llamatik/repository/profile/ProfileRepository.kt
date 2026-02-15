@@ -1,8 +1,6 @@
 package com.llamatik.repository.profile
 
-
 interface ProfileRepository {
-
     suspend fun addProfile(
         id: Int = 0,
         name: String = "",
@@ -15,7 +13,7 @@ interface ProfileRepository {
         country: String? = null,
         squadron: String? = null,
         squadronPatch: String? = null,
-        medals: List<String>? = emptyList()
+        medals: List<String>? = emptyList(),
     ): String?
 
     suspend fun getProfile(userId: Int): String?
@@ -33,6 +31,6 @@ interface ProfileRepository {
         country: String? = null,
         squadron: String? = null,
         squadronPatch: String? = null,
-        medals: List<String>? = emptyList()
+        medals: List<String>? = emptyList(),
     ): String?
 }

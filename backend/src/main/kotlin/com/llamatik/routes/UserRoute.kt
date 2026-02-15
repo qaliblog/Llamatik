@@ -37,22 +37,25 @@ class UserLogoutRoute
 fun Route.users(
     userRepository: UserRepository,
     jwtService: JwtService,
-    hashFunction: (String) -> String
+    hashFunction: (String) -> String,
 ) {
     post<UserCreateRoute> {
         val signupParameters = call.receive<Parameters>()
-        val password = signupParameters["password"] ?: return@post call.respond(
-            HttpStatusCode.Unauthorized,
-            "Missing Fields"
-        )
-        val name = signupParameters["name"] ?: return@post call.respond(
-            HttpStatusCode.Unauthorized,
-            "Missing Fields"
-        )
-        val email = signupParameters["email"] ?: return@post call.respond(
-            HttpStatusCode.Unauthorized,
-            "Missing Fields"
-        )
+        val password =
+            signupParameters["password"] ?: return@post call.respond(
+                HttpStatusCode.Unauthorized,
+                "Missing Fields",
+            )
+        val name =
+            signupParameters["name"] ?: return@post call.respond(
+                HttpStatusCode.Unauthorized,
+                "Missing Fields",
+            )
+        val email =
+            signupParameters["email"] ?: return@post call.respond(
+                HttpStatusCode.Unauthorized,
+                "Missing Fields",
+            )
         val hash = hashFunction(password)
         try {
             val newUser = userRepository.addUser(email, name, hash)
@@ -61,7 +64,7 @@ fun Route.users(
                 call.response.header("user_id", it.toString())
                 call.respondText(
                     jwtService.generateToken(newUser),
-                    status = HttpStatusCode.Created
+                    status = HttpStatusCode.Created,
                 )
             }
         } catch (e: Throwable) {
@@ -72,14 +75,16 @@ fun Route.users(
 
     post<UserLoginRoute> {
         val signInParameters = call.receive<Parameters>()
-        val password = signInParameters["password"] ?: return@post call.respond(
-            HttpStatusCode.Unauthorized,
-            "Missing Fields"
-        )
-        val email = signInParameters["email"] ?: return@post call.respond(
-            HttpStatusCode.Unauthorized,
-            "Missing Fields"
-        )
+        val password =
+            signInParameters["password"] ?: return@post call.respond(
+                HttpStatusCode.Unauthorized,
+                "Missing Fields",
+            )
+        val email =
+            signInParameters["email"] ?: return@post call.respond(
+                HttpStatusCode.Unauthorized,
+                "Missing Fields",
+            )
         val hash = hashFunction(password)
         try {
             val currentUser = userRepository.findUserByEmail(email)

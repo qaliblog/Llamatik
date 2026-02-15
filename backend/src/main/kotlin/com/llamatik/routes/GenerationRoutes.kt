@@ -40,14 +40,13 @@ private const val GENERATION_CANCEL = "$GENERATION/cancel"
  */
 @Suppress("TooGenericExceptionCaught", "LongMethod", "CyclomaticComplexMethod")
 fun Route.generationRoutes() {
-
     // --- initialization ---
     post(GENERATION_INIT) {
         val req = call.receive<InitModelRequest>()
         val res = LlamaService.initGenerateModel(req.modelPath)
         res.fold(
             onSuccess = { call.respond(InitModelResponse(ok = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Init failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Init failed") },
         )
     }
 
@@ -57,7 +56,7 @@ fun Route.generationRoutes() {
         val res = LlamaService.generate(req.prompt)
         res.fold(
             onSuccess = { call.respond(GenerateResponse(text = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") },
         )
     }
 
@@ -66,7 +65,7 @@ fun Route.generationRoutes() {
         val res = LlamaService.generateWithContext(req.systemPrompt, req.contextBlock, req.userPrompt)
         res.fold(
             onSuccess = { call.respond(GenerateResponse(text = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") },
         )
     }
 
@@ -75,7 +74,7 @@ fun Route.generationRoutes() {
         val res = LlamaService.generateJson(req.prompt, req.jsonSchema)
         res.fold(
             onSuccess = { call.respond(GenerateResponse(text = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") },
         )
     }
 
@@ -84,7 +83,7 @@ fun Route.generationRoutes() {
         val res = LlamaService.generateJsonWithContext(req.systemPrompt, req.contextBlock, req.userPrompt, req.jsonSchema)
         res.fold(
             onSuccess = { call.respond(GenerateResponse(text = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Generation failed") },
         )
     }
 
@@ -94,7 +93,7 @@ fun Route.generationRoutes() {
         val res = LlamaService.updateGenerateParams(req.temperature, req.maxTokens, req.topP, req.topK, req.repeatPenalty)
         res.fold(
             onSuccess = { call.respond(OkResponse()) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Param update failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Param update failed") },
         )
     }
 
@@ -102,7 +101,7 @@ fun Route.generationRoutes() {
         val res = LlamaService.cancelGenerate()
         res.fold(
             onSuccess = { call.respond(OkResponse()) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Cancel failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Cancel failed") },
         )
     }
 
@@ -114,22 +113,24 @@ fun Route.generationRoutes() {
         val done = Channel<Unit>(capacity = 1)
         val errors = Channel<String>(capacity = 1)
 
-        val cb = Sse.genStreamCallback(
-            onDelta = { deltas.trySend(it).isSuccess },
-            onDone = { done.trySend(Unit).isSuccess },
-            onError = { errors.trySend(it).isSuccess }
-        )
+        val cb =
+            Sse.genStreamCallback(
+                onDelta = { deltas.trySend(it).isSuccess },
+                onDone = { done.trySend(Unit).isSuccess },
+                onError = { errors.trySend(it).isSuccess },
+            )
 
         call.respondTextWriter(contentType = ContentType.Text.EventStream) {
             // Start generation on a background thread (native call blocks).
             // We do it inside the writer so the connection is already open.
-            val t = Thread {
-                try {
-                    LlamaService.generateStream(req.prompt, cb)
-                } catch (e: Throwable) {
-                    errors.trySend(e.message ?: "Streaming failed")
+            val t =
+                Thread {
+                    try {
+                        LlamaService.generateStream(req.prompt, cb)
+                    } catch (e: Throwable) {
+                        errors.trySend(e.message ?: "Streaming failed")
+                    }
                 }
-            }
             t.isDaemon = true
             t.start()
 
@@ -137,7 +138,7 @@ fun Route.generationRoutes() {
                 writer = this,
                 deltas = deltas,
                 done = done,
-                errors = errors
+                errors = errors,
             )
         }
     }
@@ -149,20 +150,22 @@ fun Route.generationRoutes() {
         val done = Channel<Unit>(capacity = 1)
         val errors = Channel<String>(capacity = 1)
 
-        val cb = Sse.genStreamCallback(
-            onDelta = { deltas.trySend(it).isSuccess },
-            onDone = { done.trySend(Unit).isSuccess },
-            onError = { errors.trySend(it).isSuccess }
-        )
+        val cb =
+            Sse.genStreamCallback(
+                onDelta = { deltas.trySend(it).isSuccess },
+                onDone = { done.trySend(Unit).isSuccess },
+                onError = { errors.trySend(it).isSuccess },
+            )
 
         call.respondTextWriter(contentType = ContentType.Text.EventStream) {
-            val t = Thread {
-                try {
-                    LlamaService.generateStreamWithContext(req.systemPrompt, req.contextBlock, req.userPrompt, cb)
-                } catch (e: Throwable) {
-                    errors.trySend(e.message ?: "Streaming failed")
+            val t =
+                Thread {
+                    try {
+                        LlamaService.generateStreamWithContext(req.systemPrompt, req.contextBlock, req.userPrompt, cb)
+                    } catch (e: Throwable) {
+                        errors.trySend(e.message ?: "Streaming failed")
+                    }
                 }
-            }
             t.isDaemon = true
             t.start()
 
@@ -177,20 +180,22 @@ fun Route.generationRoutes() {
         val done = Channel<Unit>(capacity = 1)
         val errors = Channel<String>(capacity = 1)
 
-        val cb = Sse.genStreamCallback(
-            onDelta = { deltas.trySend(it).isSuccess },
-            onDone = { done.trySend(Unit).isSuccess },
-            onError = { errors.trySend(it).isSuccess }
-        )
+        val cb =
+            Sse.genStreamCallback(
+                onDelta = { deltas.trySend(it).isSuccess },
+                onDone = { done.trySend(Unit).isSuccess },
+                onError = { errors.trySend(it).isSuccess },
+            )
 
         call.respondTextWriter(contentType = ContentType.Text.EventStream) {
-            val t = Thread {
-                try {
-                    LlamaService.generateJsonStream(req.prompt, req.jsonSchema, cb)
-                } catch (e: Throwable) {
-                    errors.trySend(e.message ?: "Streaming failed")
+            val t =
+                Thread {
+                    try {
+                        LlamaService.generateJsonStream(req.prompt, req.jsonSchema, cb)
+                    } catch (e: Throwable) {
+                        errors.trySend(e.message ?: "Streaming failed")
+                    }
                 }
-            }
             t.isDaemon = true
             t.start()
 
@@ -205,26 +210,28 @@ fun Route.generationRoutes() {
         val done = Channel<Unit>(capacity = 1)
         val errors = Channel<String>(capacity = 1)
 
-        val cb = Sse.genStreamCallback(
-            onDelta = { deltas.trySend(it).isSuccess },
-            onDone = { done.trySend(Unit).isSuccess },
-            onError = { errors.trySend(it).isSuccess }
-        )
+        val cb =
+            Sse.genStreamCallback(
+                onDelta = { deltas.trySend(it).isSuccess },
+                onDone = { done.trySend(Unit).isSuccess },
+                onError = { errors.trySend(it).isSuccess },
+            )
 
         call.respondTextWriter(contentType = ContentType.Text.EventStream) {
-            val t = Thread {
-                try {
-                    LlamaService.generateJsonStreamWithContext(
-                        req.systemPrompt,
-                        req.contextBlock,
-                        req.userPrompt,
-                        req.jsonSchema,
-                        cb
-                    )
-                } catch (e: Throwable) {
-                    errors.trySend(e.message ?: "Streaming failed")
+            val t =
+                Thread {
+                    try {
+                        LlamaService.generateJsonStreamWithContext(
+                            req.systemPrompt,
+                            req.contextBlock,
+                            req.userPrompt,
+                            req.jsonSchema,
+                            cb,
+                        )
+                    } catch (e: Throwable) {
+                        errors.trySend(e.message ?: "Streaming failed")
+                    }
                 }
-            }
             t.isDaemon = true
             t.start()
 

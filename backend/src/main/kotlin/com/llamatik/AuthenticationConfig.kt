@@ -4,7 +4,6 @@ import com.llamatik.auth.JWT_CONFIGURATION
 import com.llamatik.auth.JwtService
 import com.llamatik.auth.hash
 import com.llamatik.repository.DatabaseFactory
-import com.llamatik.repository.embeddings.EmbeddingRepositoryImpl
 import com.llamatik.repository.profile.ProfileRepositoryImpl
 import com.llamatik.repository.user.UserRepositoryImp
 import com.llamatik.routes.profiles

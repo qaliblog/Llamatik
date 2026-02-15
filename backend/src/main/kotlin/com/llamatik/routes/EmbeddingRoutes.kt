@@ -25,7 +25,7 @@ fun Route.embeddingRoutes() {
         val res = LlamaService.initModel(req.modelPath)
         res.fold(
             onSuccess = { call.respond(com.llamatik.api.InitModelResponse(ok = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Init failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Init failed") },
         )
     }
 
@@ -34,7 +34,7 @@ fun Route.embeddingRoutes() {
         val res = LlamaService.embed(req.input)
         res.fold(
             onSuccess = { call.respond(EmbedResponse(embedding = it.toList())) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Embedding failed") }
+            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Embedding failed") },
         )
     }
 }

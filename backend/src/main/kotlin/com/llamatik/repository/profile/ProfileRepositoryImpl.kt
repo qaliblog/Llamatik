@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.update
 
 class ProfileRepositoryImpl : ProfileRepository {
-
     override suspend fun addProfile(
         id: Int,
         name: String,
@@ -21,31 +20,33 @@ class ProfileRepositoryImpl : ProfileRepository {
         country: String?,
         squadron: String?,
         squadronPatch: String?,
-        medals: List<String>?
+        medals: List<String>?,
     ): String? {
         var statement: InsertStatement<Number>? = null
         dbQuery {
-            statement = Profiles.insert { profiles ->
-                profiles[Profiles.userId] = userId
-                profiles[Profiles.name] = name
-                description?.let {
-                    profiles[Profiles.description] = it
+            statement =
+                Profiles.insert { profiles ->
+                    profiles[Profiles.userId] = userId
+                    profiles[Profiles.name] = name
+                    description?.let {
+                        profiles[Profiles.description] = it
+                    }
+                    image?.let {
+                        profiles[Profiles.image] = it
+                    }
                 }
-                image?.let {
-                    profiles[Profiles.image] = it
-                }
-            }
         }
         return rowToProfiles(statement?.resultedValues?.get(0))
     }
 
-    override suspend fun getProfile(userId: Int): String? {
-        return dbQuery {
-            Profiles.select(Profiles.userId).where {
-                Profiles.userId.eq((userId))
-            }.toString()
+    override suspend fun getProfile(userId: Int): String? =
+        dbQuery {
+            Profiles
+                .select(Profiles.userId)
+                .where {
+                    Profiles.userId.eq((userId))
+                }.toString()
         }
-    }
 
     override suspend fun updateProfile(
         userId: Int,
@@ -60,12 +61,14 @@ class ProfileRepositoryImpl : ProfileRepository {
         country: String?,
         squadron: String?,
         squadronPatch: String?,
-        medals: List<String>?
-    ): String? {
-        return dbQuery {
-            Profiles.select(Profiles.userId).where {
-                Profiles.userId.eq((userId))
-            }.forUpdate()
+        medals: List<String>?,
+    ): String? =
+        dbQuery {
+            Profiles
+                .select(Profiles.userId)
+                .where {
+                    Profiles.userId.eq((userId))
+                }.forUpdate()
 
             Profiles.update {
                 Profiles.userId.eq(userId)
@@ -83,11 +86,12 @@ class ProfileRepositoryImpl : ProfileRepository {
                 }
             }
 
-            Profiles.select(Profiles.userId).where {
-                Profiles.userId.eq((userId))
-            }.toString()
+            Profiles
+                .select(Profiles.userId)
+                .where {
+                    Profiles.userId.eq((userId))
+                }.toString()
         }
-    }
 
     private fun rowToProfiles(row: ResultRow?): String? {
         if (row == null) {

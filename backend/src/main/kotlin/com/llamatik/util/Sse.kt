@@ -15,30 +15,30 @@ import java.io.Writer
  * The client can reassemble deltas until it receives a "done" event.
  */
 object Sse {
-
     fun genStreamCallback(
         onDelta: (String) -> Boolean,
         onDone: () -> Boolean,
-        onError: (String) -> Boolean
-    ): GenStream = object : GenStream {
-        override fun onDelta(text: String) {
-            onDelta(text)
-        }
+        onError: (String) -> Boolean,
+    ): GenStream =
+        object : GenStream {
+            override fun onDelta(text: String) {
+                onDelta(text)
+            }
 
-        override fun onComplete() {
-            onDone()
-        }
+            override fun onComplete() {
+                onDone()
+            }
 
-        override fun onError(message: String) {
-            onError(message)
+            override fun onError(message: String) {
+                onError(message)
+            }
         }
-    }
 
     suspend fun pipe(
         writer: Writer,
         deltas: Channel<String>,
         done: Channel<Unit>,
-        errors: Channel<String>
+        errors: Channel<String>,
     ) {
         fun Writer.writeEvent(json: String) {
             write("data: ")
@@ -49,16 +49,17 @@ object Sse {
 
         @Suppress("LoopWithTooManyJumpStatements")
         while (true) {
-            val outcome = select<String?> {
-                deltas.onReceiveCatching { it.getOrNull() }
-                errors.onReceiveCatching { err ->
-                    val msg = err.getOrNull()
-                    if (msg != null) "{\"event\":\"error\",\"message\":${jsonString(msg)}}" else null
+            val outcome =
+                select<String?> {
+                    deltas.onReceiveCatching { it.getOrNull() }
+                    errors.onReceiveCatching { err ->
+                        val msg = err.getOrNull()
+                        if (msg != null) "{\"event\":\"error\",\"message\":${jsonString(msg)}}" else null
+                    }
+                    done.onReceiveCatching {
+                        "{\"event\":\"done\"}"
+                    }
                 }
-                done.onReceiveCatching {
-                    "{\"event\":\"done\"}"
-                }
-            }
 
             if (outcome == null) break
 
@@ -83,18 +84,19 @@ object Sse {
 
     private fun jsonString(value: String): String {
         // Minimal JSON string escaping (enough for SSE payloads).
-        val escaped = buildString {
-            for (c in value) {
-                when (c) {
-                    '\\' -> append("\\\\")
-                    '"' -> append("\\\"")
-                    '\n' -> append("\\n")
-                    '\r' -> append("\\r")
-                    '\t' -> append("\\t")
-                    else -> append(c)
+        val escaped =
+            buildString {
+                for (c in value) {
+                    when (c) {
+                        '\\' -> append("\\\\")
+                        '"' -> append("\\\"")
+                        '\n' -> append("\\n")
+                        '\r' -> append("\\r")
+                        '\t' -> append("\\t")
+                        else -> append(c)
+                    }
                 }
             }
-        }
         return "\"$escaped\""
     }
 }

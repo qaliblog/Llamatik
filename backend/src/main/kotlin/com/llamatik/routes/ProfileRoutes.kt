@@ -36,7 +36,7 @@ class ProfileUpdateRoute
 @Suppress("LongMethod", "TooGenericExceptionCaught", "CyclomaticComplexMethod")
 fun Route.profiles(
     profileRepository: ProfileRepository,
-    userRepository: UserRepository
+    userRepository: UserRepository,
 ) {
     authenticate(JWT_CONFIGURATION) {
         post<ProfileCreateRoute> {
@@ -55,29 +55,31 @@ fun Route.profiles(
 
             val medals = emptyList<String>()
 
-            val user = call.sessions.get<UserSession>()?.let {
-                userRepository.findUser(it.userId)
-            }
+            val user =
+                call.sessions.get<UserSession>()?.let {
+                    userRepository.findUser(it.userId)
+                }
             if (user == null) {
                 call.respond(HttpStatusCode.BadRequest, "Problems retrieving User")
                 return@post
             }
 
             try {
-                val profile = profileRepository.addProfile(
-                    id = user.userId,
-                    name = name,
-                    nickname = nickname,
-                    description = description,
-                    image = image,
-                    preferredLanguage = preferredLanguage,
-                    serversList = serversList,
-                    rank = rank,
-                    country = country,
-                    squadron = squadron,
-                    squadronPatch = squadronPatch,
-                    medals = medals
-                )
+                val profile =
+                    profileRepository.addProfile(
+                        id = user.userId,
+                        name = name,
+                        nickname = nickname,
+                        description = description,
+                        image = image,
+                        preferredLanguage = preferredLanguage,
+                        serversList = serversList,
+                        rank = rank,
+                        country = country,
+                        squadron = squadron,
+                        squadronPatch = squadronPatch,
+                        medals = medals,
+                    )
                 /*
                 profile?.id?.let {
                     call.respond(HttpStatusCode.OK, profile)
@@ -123,30 +125,32 @@ fun Route.profiles(
             val squadronPatch = profileParameters["squadronPatch"] ?: ""
             val medals = emptyList<String>()
 
-            val user = call.sessions.get<UserSession>()?.let {
-                userRepository.findUser(it.userId)
-            }
+            val user =
+                call.sessions.get<UserSession>()?.let {
+                    userRepository.findUser(it.userId)
+                }
             if (user == null) {
                 call.respond(HttpStatusCode.BadRequest, "Problems retrieving User")
                 return@patch
             }
 
             try {
-                val profile = profileRepository.updateProfile(
-                    userId = user.userId,
-                    name = name,
-                    nickname = nickname,
-                    description = description,
-                    image = image,
-                    location = location,
-                    preferredLanguage = preferredLanguage,
-                    serversList = serversList,
-                    rank = rank,
-                    country = country,
-                    squadron = squadron,
-                    squadronPatch = squadronPatch,
-                    medals = medals
-                )
+                val profile =
+                    profileRepository.updateProfile(
+                        userId = user.userId,
+                        name = name,
+                        nickname = nickname,
+                        description = description,
+                        image = image,
+                        location = location,
+                        preferredLanguage = preferredLanguage,
+                        serversList = serversList,
+                        rank = rank,
+                        country = country,
+                        squadron = squadron,
+                        squadronPatch = squadronPatch,
+                        medals = medals,
+                    )
                 /*
                 profile?.id?.let {
                     call.respond(HttpStatusCode.OK, profile)
