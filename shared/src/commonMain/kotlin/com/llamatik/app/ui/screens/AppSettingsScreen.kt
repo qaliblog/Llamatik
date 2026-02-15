@@ -47,6 +47,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.llamatik.app.feature.debugmenu.viewmodel.DebugMenuSideEffects
 import com.llamatik.app.feature.debugmenu.viewmodel.DebugMenuViewModel
+import com.llamatik.app.feature.server.ServerProvider
 import com.llamatik.app.localization.AvailableLanguages
 import com.llamatik.app.localization.SetLanguage
 import com.llamatik.app.localization.getCurrentLanguage
@@ -238,6 +239,87 @@ class AppSettingsScreen : Screen {
                             Text(
                                 text = localization.change
                             )
+                        }
+                    }
+
+                    Spacer(Modifier.size(32.dp))
+
+                    Text(
+                        text = "AI Server",
+                        style = Typography.get().bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+
+                    Spacer(Modifier.size(8.dp))
+
+                    LabelledSwitch(
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
+                        label = "Enable Server",
+                        checked = state.isServerRunning
+                    ) {
+                        viewModel.onServerToggle(it)
+                    }
+
+                    Spacer(Modifier.size(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Provider")
+                        Button(
+                            onClick = {
+                                pickerModel.value = PickerModel(
+                                    "Choose Provider",
+                                    null,
+                                    listOf(
+                                        PickerOption("OpenAI") {
+                                            viewModel.onServerProviderChanged(ServerProvider.OPENAI)
+                                            showingModal.value = false
+                                        },
+                                        PickerOption("Ollama") {
+                                            viewModel.onServerProviderChanged(ServerProvider.OLLAMA)
+                                            showingModal.value = false
+                                        },
+                                        PickerOption("Both") {
+                                            viewModel.onServerProviderChanged(ServerProvider.BOTH)
+                                            showingModal.value = false
+                                        }
+                                    )
+                                )
+                                showingModal.value = true
+                            }
+                        ) {
+                            Text(text = state.serverProvider.name)
+                        }
+                    }
+
+                    Spacer(Modifier.size(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Port")
+                        Button(
+                            onClick = {
+                                pickerModel.value = PickerModel(
+                                    "Choose Port",
+                                    null,
+                                    listOf(8080, 11434, 4000).map { port ->
+                                        PickerOption(port.toString()) {
+                                            viewModel.onServerPortChanged(port)
+                                            showingModal.value = false
+                                        }
+                                    }
+                                )
+                                showingModal.value = true
+                            }
+                        ) {
+                            Text(text = state.serverPort.toString())
                         }
                     }
                     /*

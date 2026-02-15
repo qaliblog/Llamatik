@@ -75,6 +75,9 @@ kotlin {
 
             implementation(libs.ktor.client)
             implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.server.core)
+            implementation(libs.ktor.server.cio)
+            implementation(libs.ktor.server.content-negotiation)
             implementation(libs.ktor.server.serialization.kotlinx.json)
 
             // Kamel for image loading

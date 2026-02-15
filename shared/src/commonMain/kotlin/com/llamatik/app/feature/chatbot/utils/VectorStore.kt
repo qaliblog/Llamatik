@@ -24,7 +24,12 @@ data class VectorStoreData(
 )
 
 suspend fun loadVectorStoreEntries(): VectorStoreData = withContext(Dispatchers.Default) {
-    val byteArray = Res.readBytes("files/vector_store_export_general.json")
+    val byteArray = try {
+        Res.readBytes("files/vector_store_export_general.json")
+    } catch (e: Exception) {
+        Logger.e("Vector store file not found: ${e.message}")
+        return@withContext VectorStoreData(emptyList())
+    }
     val jsonString = byteArray.decodeToString()
 
     val json = Json { ignoreUnknownKeys = true }

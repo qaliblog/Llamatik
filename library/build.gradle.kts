@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     id("org.jetbrains.compose")
     id("com.android.library")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka") version "2.1.0"
     id("maven-publish")
     id("signing")
@@ -336,6 +337,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlin.stdlib)
+                implementation(libs.kotlinx.serialization.json)
                 implementation(compose.ui)
                 implementation(compose.foundation)
                 implementation(compose.components.resources)

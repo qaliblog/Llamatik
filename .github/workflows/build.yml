@@ -32,6 +32,11 @@ jobs:
       - name: Create dummy google-services.json
         run: echo '{"project_info":{"project_number":"123456789012","project_id":"llamatik-dummy","storage_bucket":"llamatik-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.llamatik.app.android"}},"oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > composeApp/google-services.json
 
+      - name: Create dummy vector store
+        run: |
+          mkdir -p shared/src/commonMain/composeResources/files
+          echo "[]" > shared/src/commonMain/composeResources/files/vector_store_export_general.json
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
