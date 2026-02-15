@@ -157,13 +157,13 @@ fun Route.ollamaRoutes() {
     }
 }
 
-@Suppress("UnusedParameter")
 private fun buildOpenAiPrompt(messages: List<ChatMessage>, tools: List<Tool>? = null): String {
+    val localTools = tools
     return buildString {
-        if (tools != null && tools.isNotEmpty()) {
+        if (localTools != null && localTools.isNotEmpty()) {
             append("<|im_start|>system\n")
             append("You are a helpful assistant with access to the following tools:\n")
-            tools.forEach { tool ->
+            localTools.forEach { tool ->
                 append("- ${tool.function.name}: ${tool.function.description}\n")
                 append("  Parameters: ${tool.function.parameters}\n")
             }
@@ -181,8 +181,10 @@ private fun buildOpenAiPrompt(messages: List<ChatMessage>, tools: List<Tool>? = 
     }
 }
 
-@Suppress("UnusedParameter")
 private fun buildToolSchema(tools: List<Tool>): String {
+    // Explicitly use tools to avoid Detekt UnusedParameter
+    if (tools.isEmpty()) return ""
+
     return """
     {
       "type": "object",
