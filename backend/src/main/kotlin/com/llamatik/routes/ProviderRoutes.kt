@@ -33,6 +33,7 @@ private const val DEFAULT_TOP_P = 0.9f
 private const val DEFAULT_TOP_K = 40
 private const val DEFAULT_REPEAT_PENALTY = 1.1f
 private const val UUID_SHORT_LENGTH = 8
+private const val ZERO = 0
 
 fun Route.providerRoutes() {
     openAiRoutes()
@@ -75,12 +76,12 @@ fun Route.openAiRoutes() {
                     model = req.model,
                     choices = listOf(
                         ChatChoice(
-                            index = 0,
+                            index = ZERO,
                             message = message,
                             finishReason = if (message.toolCalls != null) "tool_calls" else "stop"
                         )
                     ),
-                    usage = ChatUsage(0, 0, 0)
+                    usage = ChatUsage(ZERO, ZERO, ZERO)
                 )
                 call.respond(response)
             },
@@ -156,6 +157,7 @@ fun Route.ollamaRoutes() {
     }
 }
 
+@Suppress("UnusedParameter")
 private fun buildOpenAiPrompt(messages: List<ChatMessage>, tools: List<Tool>? = null): String {
     return buildString {
         if (tools != null && tools.isNotEmpty()) {
@@ -179,6 +181,7 @@ private fun buildOpenAiPrompt(messages: List<ChatMessage>, tools: List<Tool>? = 
     }
 }
 
+@Suppress("UnusedParameter")
 private fun buildToolSchema(tools: List<Tool>): String {
     return """
     {
