@@ -47,6 +47,7 @@ object Sse {
             (this as? Flushable)?.flush()
         }
 
+        @Suppress("LoopWithTooManyJumpStatements")
         while (true) {
             val outcome = select<String?> {
                 deltas.onReceiveCatching { it.getOrNull() }

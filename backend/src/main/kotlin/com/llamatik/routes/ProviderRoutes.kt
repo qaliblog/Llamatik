@@ -29,10 +29,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 private const val DEFAULT_MAX_TOKENS = 512
-private const val DEFAULT_TEMPERATURE = 1.0f
 private const val DEFAULT_TOP_P = 0.9f
 private const val DEFAULT_TOP_K = 40
 private const val DEFAULT_REPEAT_PENALTY = 1.1f
+private const val UUID_SHORT_LENGTH = 8
 
 fun Route.providerRoutes() {
     openAiRoutes()
@@ -211,7 +211,7 @@ private fun parseToolResponse(jsonText: String): ChatMessage {
         val toolCalls = toolCallsJson?.map {
             val obj = it.jsonObject
             ToolCall(
-                id = "call_" + UUID.randomUUID().toString().take(8),
+                id = "call_" + UUID.randomUUID().toString().take(UUID_SHORT_LENGTH),
                 type = "function",
                 function = FunctionCall(
                     name = obj["name"]?.jsonPrimitive?.content ?: "",
