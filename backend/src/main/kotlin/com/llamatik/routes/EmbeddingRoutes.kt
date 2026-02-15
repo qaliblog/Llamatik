@@ -3,8 +3,8 @@ package com.llamatik.routes
 import com.llamatik.API_VERSION
 import com.llamatik.api.EmbedRequest
 import com.llamatik.api.EmbedResponse
-import com.llamatik.llama.LlamaService
-import io.ktor.http.HttpStatusCode
+import com.llamatik.library.platform.LlamaService
+import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -22,19 +22,13 @@ const val EMBEDDINGS_EMBED = "$EMBEDDINGS/embed"
 fun Route.embeddingRoutes() {
     post(EMBEDDINGS_INIT) {
         val req = call.receive<com.llamatik.api.InitModelRequest>()
-        val res = LlamaService.initModel(req.modelPath)
-        res.fold(
-            onSuccess = { call.respond(com.llamatik.api.InitModelResponse(ok = it)) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Init failed") },
-        )
+        val ok = LlamaService.initModel(req.modelPath).getOrThrow()
+        call.respond(com.llamatik.api.InitModelResponse(ok = ok))
     }
 
     post(EMBEDDINGS_EMBED) {
         val req = call.receive<EmbedRequest>()
-        val res = LlamaService.embed(req.input)
-        res.fold(
-            onSuccess = { call.respond(EmbedResponse(embedding = it.toList())) },
-            onFailure = { call.respond(HttpStatusCode.BadRequest, it.message ?: "Embedding failed") },
-        )
+        val embedding = LlamaService.embed(req.input).getOrThrow()
+        call.respond(EmbedResponse(embedding = embedding.toList()))
     }
 }

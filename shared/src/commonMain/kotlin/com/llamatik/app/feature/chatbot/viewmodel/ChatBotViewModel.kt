@@ -31,7 +31,7 @@ import com.llamatik.app.localization.getCurrentLocalization
 import com.llamatik.app.platform.LlamatikTempFile
 import com.llamatik.app.platform.migrateModelPathIfNeeded
 import com.llamatik.app.platform.tts.TtsEngine
-import com.llamatik.library.platform.LlamaBridge
+import com.llamatik.library.platform.LlamaService
 import com.llamatik.library.platform.WhisperBridge
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.Dispatchers
@@ -173,11 +173,11 @@ class ChatBotViewModel(
 
         screenModelScope.launch(Dispatchers.IO) {
             embedFilePath?.let {
-                LlamaBridge.initModel(embedFilePath)
+                LlamaService.initModel(embedFilePath)
                 _state.value = _state.value.copy(isEmbedModelLoaded = true)
             }
             generatorFilePath?.let {
-                LlamaBridge.initGenerateModel(generatorFilePath)
+                LlamaService.initGenerateModel(generatorFilePath)
                 _state.value = _state.value.copy(isGenerateModelLoaded = true)
             }
 
@@ -234,8 +234,8 @@ class ChatBotViewModel(
                         val path = resolveAndMigratePath(model) ?: continue
 
                         Logger.d("LlamaVM - Init Generate Model: ${model.name} at $path")
-                        val isLoaded = LlamaBridge.initGenerateModel(path)
-                        if (isLoaded) {
+                        val res = LlamaService.initGenerateModel(path)
+                        if (res.getOrDefault(false)) {
                             _state.value =
                                 _state.value.copy(
                                     selectedGenerateModelName = model.name,
@@ -325,8 +325,8 @@ class ChatBotViewModel(
                 }
             )
 
-            val loaded = LlamaBridge.initGenerateModel(path)
-            if (loaded) {
+            val res = LlamaService.initGenerateModel(path)
+            if (res.getOrDefault(false)) {
                 _state.value = _state.value.copy(
                     selectedGenerateModelName = defaultModel.name,
                     isGenerateModelLoaded = true,
@@ -423,13 +423,15 @@ class ChatBotViewModel(
 
     fun onGenerateSettingsApplied(settings: GenerateSettings) {
         _state.value = _state.value.copy(generateSettings = settings)
-        LlamaBridge.updateGenerateParams(
-            temperature = settings.temperature,
-            maxTokens = settings.maxTokens,
-            topP = settings.topP,
-            topK = settings.topK,
-            repeatPenalty = settings.repeatPenalty
-        )
+        screenModelScope.launch {
+            LlamaService.updateGenerateParams(
+                temperature = settings.temperature,
+                maxTokens = settings.maxTokens,
+                topP = settings.topP,
+                topK = settings.topK,
+                repeatPenalty = settings.repeatPenalty
+            )
+        }
     }
 
     fun onEmbedModelSelected(model: LlamaModel) {
@@ -438,8 +440,8 @@ class ChatBotViewModel(
 
             if (!path.isNullOrEmpty()) {
                 Logger.d("LlamaVM - initEmbedModel $path")
-                val isLoaded = LlamaBridge.initModel(path)
-                if (isLoaded) {
+                val res = LlamaService.initModel(path)
+                if (res.getOrDefault(false)) {
                     _state.value = _state.value.copy(selectedEmbedModelName = model.name)
                     _sideEffects.trySend(ChatBotSideEffects.OnEmbedModelLoaded)
                 } else {
@@ -458,8 +460,8 @@ class ChatBotViewModel(
 
             if (!path.isNullOrEmpty()) {
                 Logger.d("LlamaVM - initGenerateModel $path")
-                val isLoaded = LlamaBridge.initGenerateModel(path)
-                if (isLoaded) {
+                val res = LlamaService.initGenerateModel(path)
+                if (res.getOrDefault(false)) {
                     _state.value = _state.value.copy(selectedGenerateModelName = model.name)
                     _sideEffects.trySend(ChatBotSideEffects.OnGenerateModelLoaded)
                     notifyGenerateModelLoadedForReview()
@@ -621,7 +623,9 @@ class ChatBotViewModel(
     override fun onDispose() {
         activeRequestId = null
         _state.value = _state.value.copy(isGenerating = false)
-        LlamaBridge.shutdown()
+        screenModelScope.launch {
+            LlamaService.shutdown()
+        }
     }
 
     private fun sanitizeForRag(s: String): String {
@@ -645,7 +649,8 @@ class ChatBotViewModel(
 
             withContext(Dispatchers.IO) {
                 try {
-                    val qVec = LlamaBridge.embed(question).toList()
+                    val qVecRes = LlamaService.embed(question)
+                    val qVec = qVecRes.getOrNull()?.toList() ?: return@withContext emitBot("There is a problem with the AI")
                     val store =
                         vectorStore ?: return@withContext emitBot("There is a problem with the AI")
 
@@ -855,7 +860,7 @@ class ChatBotViewModel(
     /** Called from UI Stop button – logical stop + native cancellation */
     fun stopGeneration() {
         Logger.d { "LlamaVM - stopGeneration()" }
-        LlamaBridge.nativeCancelGenerate()
+        LlamaService.cancelGenerate()
         activeRequestId = null
         _state.value = _state.value.copy(isGenerating = false)
         val messages = _conversation.value

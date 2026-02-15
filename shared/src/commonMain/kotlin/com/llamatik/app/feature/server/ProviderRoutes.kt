@@ -6,14 +6,14 @@ import com.llamatik.api.ChatCompletionResponse
 import com.llamatik.api.ChatMessage
 import com.llamatik.api.ChatUsage
 import com.llamatik.api.FunctionCall
+import com.llamatik.api.ModelConfig
 import com.llamatik.api.OllamaChatRequest
 import com.llamatik.api.OllamaChatResponse
 import com.llamatik.api.OllamaGenerateRequest
 import com.llamatik.api.OllamaGenerateResponse
 import com.llamatik.api.Tool
 import com.llamatik.api.ToolCall
-import com.llamatik.library.platform.LlamaBridge
-import io.ktor.http.HttpStatusCode
+import com.llamatik.library.platform.LlamaService
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -24,7 +24,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlin.random.Random
 
 private const val DEFAULT_MAX_TOKENS = 512
@@ -33,26 +33,45 @@ private const val DEFAULT_TOP_K = 40
 private const val DEFAULT_REPEAT_PENALTY = 1.1f
 private const val UUID_SHORT_LENGTH = 8
 private const val ZERO = 0
+private const val MS_PER_SEC = 1000
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 fun Route.openAiRoutes() {
+    get("/v1/models") {
+        call.respond(
+            mapOf(
+                "object" to "list",
+                "data" to ModelConfig.recommendedModels.map {
+                    mapOf(
+                        "id" to it.id,
+                        "object" to "model",
+                        "created" to Clock.System.now().toEpochMilliseconds() / MS_PER_SEC,
+                        "owned_by" to "llamatik"
+                    )
+                }
+            )
+        )
+    }
+
     post("/v1/chat/completions") {
         val req = call.receive<ChatCompletionRequest>()
-        val prompt = buildOpenAiPrompt(req.messages, req.tools)
+        val tools = req.tools
+        val prompt = buildOpenAiPrompt(req.messages, tools)
 
         req.temperature?.let { t ->
             val maxTokens = req.maxTokens ?: DEFAULT_MAX_TOKENS
             val topP = req.topP ?: DEFAULT_TOP_P
-            LlamaBridge.updateGenerateParams(t, maxTokens, topP, DEFAULT_TOP_K, DEFAULT_REPEAT_PENALTY)
+            LlamaService.updateGenerateParams(t, maxTokens, topP, DEFAULT_TOP_K, DEFAULT_REPEAT_PENALTY)
         }
 
-        val text = if (req.tools != null && req.tools.isNotEmpty()) {
-            val schema = buildToolSchema(req.tools)
-            LlamaBridge.generateJson(prompt, schema)
+        val text = if (tools != null && tools.isNotEmpty()) {
+            val schema = buildToolSchema(tools)
+            LlamaService.generateJson(prompt, schema).getOrThrow()
         } else {
-            LlamaBridge.generate(prompt)
+            LlamaService.generate(prompt).getOrThrow()
         }
 
-        val message = if (req.tools != null && req.tools.isNotEmpty()) {
+        val message = if (tools != null && tools.isNotEmpty()) {
             parseToolResponse(text)
         } else {
             ChatMessage(role = "assistant", content = text)
@@ -60,7 +79,7 @@ fun Route.openAiRoutes() {
 
         val response = ChatCompletionResponse(
             id = "chatcmpl-" + Random.nextLong().toString(),
-            created = Clock.System.now().epochSeconds,
+            created = Clock.System.now().toEpochMilliseconds() / MS_PER_SEC,
             model = req.model,
             choices = listOf(
                 ChatChoice(
@@ -75,10 +94,27 @@ fun Route.openAiRoutes() {
     }
 }
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 fun Route.ollamaRoutes() {
+    get("/api/tags") {
+        call.respond(
+            mapOf(
+                "models" to ModelConfig.recommendedModels.map {
+                    mapOf(
+                        "name" to it.id,
+                        "modified_at" to Clock.System.now().toString(),
+                        "size" to 0,
+                        "digest" to "sha256:0",
+                        "details" to mapOf("family" to "llama")
+                    )
+                }
+            )
+        )
+    }
+
     post("/api/generate") {
         val req = call.receive<OllamaGenerateRequest>()
-        val text = LlamaBridge.generate(req.prompt)
+        val text = LlamaService.generate(req.prompt).getOrThrow()
         val response = OllamaGenerateResponse(
             model = req.model,
             createdAt = Clock.System.now().toString(),
@@ -90,16 +126,17 @@ fun Route.ollamaRoutes() {
 
     post("/api/chat") {
         val req = call.receive<OllamaChatRequest>()
-        val prompt = buildOpenAiPrompt(req.messages, req.tools)
+        val tools = req.tools
+        val prompt = buildOpenAiPrompt(req.messages, tools)
 
-        val text = if (req.tools != null && req.tools.isNotEmpty()) {
-            val schema = buildToolSchema(req.tools)
-            LlamaBridge.generateJson(prompt, schema)
+        val text = if (tools != null && tools.isNotEmpty()) {
+            val schema = buildToolSchema(tools)
+            LlamaService.generateJson(prompt, schema).getOrThrow()
         } else {
-            LlamaBridge.generate(prompt)
+            LlamaService.generate(prompt).getOrThrow()
         }
 
-        val message = if (req.tools != null && req.tools.isNotEmpty()) {
+        val message = if (tools != null && tools.isNotEmpty()) {
             parseToolResponse(text)
         } else {
             ChatMessage(role = "assistant", content = text)
@@ -131,8 +168,9 @@ private fun buildOpenAiPrompt(messages: List<ChatMessage>, tools: List<Tool>? = 
         }
         messages.forEach { msg ->
             append("<|im_start|>${msg.role}\n${msg.content ?: ""}")
-            if (msg.toolCalls != null) {
-                append("\nTool Calls: ${msg.toolCalls}")
+            val tCalls = msg.toolCalls
+            if (tCalls != null) {
+                append("\nTool Calls: $tCalls")
             }
             append("<|im_end|>\n")
         }

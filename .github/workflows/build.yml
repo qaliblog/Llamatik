@@ -17,10 +17,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: gradle
 
@@ -30,12 +30,12 @@ jobs:
           sudo apt-get install -y libtool libtool-bin cmake
 
       - name: Create dummy google-services.json
-        run: echo '{"project_info":{"project_number":"123456789012","project_id":"llamatik-dummy","storage_bucket":"llamatik-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.llamatik.app.android"}},"oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > composeApp/google-services.json
+        run: echo '{"project_info":{"project_number":"123456789012","project_id":"llamatik-dummy","storage_bucket":"llamatik-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.llamatik.app.android"}},"oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > composeApp/google-services.json
 
       - name: Create dummy vector store
         run: |
           mkdir -p shared/src/commonMain/composeResources/files
-          echo "[]" > shared/src/commonMain/composeResources/files/vector_store_export_general.json
+          echo '[{"id":"e1","text":"Llamatik is an advanced AI assistant framework for mobile devices.","vector":[0.1,0.2,0.3],"metadata":{"source":"general"}}]' > shared/src/commonMain/composeResources/files/vector_store_export_general.json
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
@@ -159,51 +160,6 @@ class AppSettingsScreen : Screen {
                         .background(MaterialTheme.colorScheme.background)
                         .verticalScroll(scrollState)
                 ) {
-                    /*
-                    Row(
-                        modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Row {
-                                Text(
-                                    text = "Environment:"
-                                )
-                                Spacer(Modifier.size(16.dp))
-                                Text(
-                                    text = state.currentEnvironment.toString(),
-                                    style = Typography.get().bodyMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Text(
-                                text = "URL: ${state.currentEnvironment.url}",
-                                style = Typography.get().labelSmall
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                pickerModel.value = PickerModel(
-                                    "Choose Environment",
-                                    null,
-                                    ServerEnvironment.toPickerList {
-                                        viewModel.onSelectedEnvironment(it)
-                                        showingModal.value = false
-                                    }
-                                )
-                                showingModal.value = true
-                            }
-                        ) {
-                            Text(
-                                text = "Change"
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.size(16.dp))
-                     */
                     Row(
                         modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -275,15 +231,15 @@ class AppSettingsScreen : Screen {
                                     "Choose Provider",
                                     null,
                                     listOf(
-                                        PickerOption("OpenAI") {
+                                        PickerOption("OpenAI", null) {
                                             viewModel.onServerProviderChanged(ServerProvider.OPENAI)
                                             showingModal.value = false
                                         },
-                                        PickerOption("Ollama") {
+                                        PickerOption("Ollama", null) {
                                             viewModel.onServerProviderChanged(ServerProvider.OLLAMA)
                                             showingModal.value = false
                                         },
-                                        PickerOption("Both") {
+                                        PickerOption("Both", null) {
                                             viewModel.onServerProviderChanged(ServerProvider.BOTH)
                                             showingModal.value = false
                                         }
@@ -310,7 +266,7 @@ class AppSettingsScreen : Screen {
                                     "Choose Port",
                                     null,
                                     listOf(8080, 11434, 4000).map { port ->
-                                        PickerOption(port.toString()) {
+                                        PickerOption(port.toString(), null) {
                                             viewModel.onServerPortChanged(port)
                                             showingModal.value = false
                                         }
@@ -322,27 +278,6 @@ class AppSettingsScreen : Screen {
                             Text(text = state.serverPort.toString())
                         }
                     }
-                    /*
-                                        Spacer(Modifier.size(16.dp))
-
-                                        LabelledSwitch(
-                                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
-                                            label = "Mocked Content",
-                                            checked = state.isMockedContentChecked
-                                        ) {
-                                            viewModel.onMockedContentCheckChanged(!state.isMockedContentChecked)
-                                        }
-
-                                        Spacer(Modifier.size(16.dp))
-
-                                        LabelledSwitch(
-                                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
-                                            label = "Mocked User",
-                                            checked = state.isMockedUserChecked
-                                        ) {
-                                            viewModel.onMockedUserCheckChanged(!state.isMockedUserChecked)
-                                        }
-                     */
                 }
             }
             if (showingModal.value) {

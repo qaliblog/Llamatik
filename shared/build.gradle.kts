@@ -10,7 +10,6 @@ plugins {
 }
 
 kotlin {
-    // Android
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -30,20 +29,9 @@ kotlin {
         target.binaries.framework {
             baseName = "shared"
             isStatic = false
-
-            // We used to re-export :library, but Kotlin/Native can't export a cinterop klib.
-            // The :library framework is static and force-loads its merged archive already,
-            // so symbols are included transitively without export().
-            // export(project(":library"))  <-- keep removed
-
-            // Give it a bundle id to keep Xcode happy
             freeCompilerArgs += "-Xbinary=bundleId=com.llamatik.shared"
             freeCompilerArgs += "-Xbinary=ios_version_min=16.6"
             freeCompilerArgs += "-Xoverride-konan-properties=osVersionMin.ios=16.6"
-
-            // NOTE:
-            // We deliberately do NOT add custom linkerOpts here.
-            // The native bits (llama/ggml) are linked & force-loaded in :library already.
         }
     }
 
@@ -59,14 +47,15 @@ kotlin {
         commonMain.dependencies {
             api(project(":library"))
 
-            implementation(compose.ui)
+            implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.components.resources)
+            implementation(compose.ui)
             implementation(compose.material)
             implementation(compose.material3)
             implementation(compose.animation)
             implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
 
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
@@ -77,7 +66,7 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.server.core)
             implementation(libs.ktor.server.cio)
-            implementation(libs.ktor.server.content-negotiation)
+            implementation(libs.ktor.server.content.negotiation)
             implementation(libs.ktor.server.serialization.kotlinx.json)
 
             // Kamel for image loading
@@ -152,6 +141,8 @@ kotlin {
 
 compose.resources {
     publicResClass = true
+    packageOfResClass = "com.llamatik.app.resources"
+    generateResClass = always
 }
 
 android {
@@ -160,26 +151,10 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-        // If you use NDK here, configure ABI filters accordingly.
-        // ndk { abiFilters.add("arm64-v8a") }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-
-    kotlin {
-        jvmToolchain(21)
-    }
-
-    // If you’re not building JNI in :shared, keep these disabled.
-    // sourceSets["main"].jniLibs.srcDirs("src/commonMain/jniLibs")
-    // externalNativeBuild { cmake { path = file("src/commonMain/cpp/CMakeLists.txt") } }
-}
-
-compose.resources {
-    publicResClass = true
-    packageOfResClass = "com.llamatik.app.resources"
-    generateResClass = always
 }

@@ -6,15 +6,14 @@ import com.llamatik.api.ChatCompletionResponse
 import com.llamatik.api.ChatMessage
 import com.llamatik.api.ChatUsage
 import com.llamatik.api.FunctionCall
+import com.llamatik.api.ModelConfig
 import com.llamatik.api.OllamaChatRequest
 import com.llamatik.api.OllamaChatResponse
 import com.llamatik.api.OllamaGenerateRequest
 import com.llamatik.api.OllamaGenerateResponse
 import com.llamatik.api.Tool
 import com.llamatik.api.ToolCall
-import com.llamatik.llama.LlamaService
-import com.llamatik.models.ModelConfig
-import io.ktor.http.HttpStatusCode
+import com.llamatik.library.platform.LlamaService
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -26,8 +25,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.time.Instant
-import java.time.format.DateTimeFormatter
-import java.util.UUID
+import kotlin.random.Random
 
 private const val DEFAULT_MAX_TOKENS = 512
 private const val DEFAULT_TOP_P = 0.9f
@@ -36,19 +34,28 @@ private const val DEFAULT_REPEAT_PENALTY = 1.1f
 private const val UUID_SHORT_LENGTH = 8
 private const val ZERO = 0
 
-fun Route.providerRoutes() {
-    openAiRoutes()
-    ollamaRoutes()
-}
-
 fun Route.openAiRoutes() {
     get("/v1/models") {
-        call.respond(mapOf("data" to ModelConfig.recommendedModels))
+        call.respond(
+            mapOf(
+                "object" to "list",
+                "data" to
+                    ModelConfig.recommendedModels.map {
+                        mapOf(
+                            "id" to it.id,
+                            "object" to "model",
+                            "created" to Instant.now().epochSecond,
+                            "owned_by" to "llamatik",
+                        )
+                    },
+            ),
+        )
     }
 
     post("/v1/chat/completions") {
         val req = call.receive<ChatCompletionRequest>()
-        val prompt = buildOpenAiPrompt(req.messages, req.tools)
+        val tools = req.tools
+        val prompt = buildOpenAiPrompt(req.messages, tools)
 
         req.temperature?.let { t ->
             val maxTokens = req.maxTokens ?: DEFAULT_MAX_TOKENS
@@ -56,117 +63,103 @@ fun Route.openAiRoutes() {
             LlamaService.updateGenerateParams(t, maxTokens, topP, DEFAULT_TOP_K, DEFAULT_REPEAT_PENALTY)
         }
 
-        val res =
-            if (req.tools != null && req.tools.isNotEmpty()) {
-                val schema = buildToolSchema(req.tools)
-                LlamaService.generateJson(prompt, schema)
+        val text =
+            if (tools != null && tools.isNotEmpty()) {
+                val schema = buildToolSchema(tools)
+                LlamaService.generateJson(prompt, schema).getOrThrow()
             } else {
-                LlamaService.generate(prompt)
+                LlamaService.generate(prompt).getOrThrow()
             }
 
-        res.fold(
-            onSuccess = { text ->
-                val message =
-                    if (req.tools != null && req.tools.isNotEmpty()) {
-                        parseToolResponse(text)
-                    } else {
-                        ChatMessage(role = "assistant", content = text)
-                    }
+        val message =
+            if (tools != null && tools.isNotEmpty()) {
+                parseToolResponse(text)
+            } else {
+                ChatMessage(role = "assistant", content = text)
+            }
 
-                val response =
-                    ChatCompletionResponse(
-                        id = "chatcmpl-" + UUID.randomUUID().toString(),
-                        created = Instant.now().epochSecond,
-                        model = req.model,
-                        choices =
-                            listOf(
-                                ChatChoice(
-                                    index = ZERO,
-                                    message = message,
-                                    finishReason = if (message.toolCalls != null) "tool_calls" else "stop",
-                                ),
-                            ),
-                        usage = ChatUsage(ZERO, ZERO, ZERO),
-                    )
-                call.respond(response)
-            },
-            onFailure = {
-                call.respond(HttpStatusCode.InternalServerError, it.message ?: "Generation failed")
-            },
-        )
+        val response =
+            ChatCompletionResponse(
+                id = "chatcmpl-" + Random.nextLong().toString(),
+                created = Instant.now().epochSecond,
+                model = req.model,
+                choices =
+                    listOf(
+                        ChatChoice(
+                            index = ZERO,
+                            message = message,
+                            finishReason = if (message.toolCalls != null) "tool_calls" else "stop",
+                        ),
+                    ),
+                usage = ChatUsage(ZERO, ZERO, ZERO),
+            )
+        call.respond(response)
     }
 }
 
 fun Route.ollamaRoutes() {
-    post("/api/generate") {
-        val req = call.receive<OllamaGenerateRequest>()
-        val res = LlamaService.generate(req.prompt)
-        res.fold(
-            onSuccess = { text ->
-                val response =
-                    OllamaGenerateResponse(
-                        model = req.model,
-                        createdAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-                        response = text,
-                        done = true,
-                    )
-                call.respond(response)
-            },
-            onFailure = {
-                call.respond(HttpStatusCode.InternalServerError, it.message ?: "Generation failed")
-            },
+    get("/api/tags") {
+        call.respond(
+            mapOf(
+                "models" to
+                    ModelConfig.recommendedModels.map {
+                        mapOf(
+                            "name" to it.id,
+                            "modified_at" to Instant.now().toString(),
+                            "size" to 0,
+                            "digest" to "sha256:0",
+                            "details" to mapOf("family" to "llama"),
+                        )
+                    },
+            ),
         )
     }
 
-    get("/api/tags") {
-        val models =
-            ModelConfig.recommendedModels.map {
-                mapOf(
-                    "name" to it.id,
-                    "model" to it.id,
-                    "details" to mapOf("family" to "llama"),
-                )
-            }
-        call.respond(mapOf("models" to models))
+    post("/api/generate") {
+        val req = call.receive<OllamaGenerateRequest>()
+        val text = LlamaService.generate(req.prompt).getOrThrow()
+        val response =
+            OllamaGenerateResponse(
+                model = req.model,
+                createdAt = Instant.now().toString(),
+                response = text,
+                done = true,
+            )
+        call.respond(response)
     }
 
     post("/api/chat") {
         val req = call.receive<OllamaChatRequest>()
-        val prompt = buildOpenAiPrompt(req.messages, req.tools)
+        val tools = req.tools
+        val prompt = buildOpenAiPrompt(req.messages, tools)
 
-        val res =
-            if (req.tools != null && req.tools.isNotEmpty()) {
-                val schema = buildToolSchema(req.tools)
-                LlamaService.generateJson(prompt, schema)
+        val text =
+            if (tools != null && tools.isNotEmpty()) {
+                val schema = buildToolSchema(tools)
+                LlamaService.generateJson(prompt, schema).getOrThrow()
             } else {
-                LlamaService.generate(prompt)
+                LlamaService.generate(prompt).getOrThrow()
             }
 
-        res.fold(
-            onSuccess = { text ->
-                val message =
-                    if (req.tools != null && req.tools.isNotEmpty()) {
-                        parseToolResponse(text)
-                    } else {
-                        ChatMessage(role = "assistant", content = text)
-                    }
+        val message =
+            if (tools != null && tools.isNotEmpty()) {
+                parseToolResponse(text)
+            } else {
+                ChatMessage(role = "assistant", content = text)
+            }
 
-                val response =
-                    OllamaChatResponse(
-                        model = req.model,
-                        createdAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-                        message = message,
-                        done = true,
-                    )
-                call.respond(response)
-            },
-            onFailure = {
-                call.respond(HttpStatusCode.InternalServerError, it.message ?: "Generation failed")
-            },
-        )
+        val response =
+            OllamaChatResponse(
+                model = req.model,
+                createdAt = Instant.now().toString(),
+                message = message,
+                done = true,
+            )
+        call.respond(response)
     }
 }
 
+@Suppress("UnusedParameter")
 private fun buildOpenAiPrompt(
     messages: List<ChatMessage>,
     tools: List<Tool>? = null,
@@ -185,8 +178,9 @@ private fun buildOpenAiPrompt(
         }
         messages.forEach { msg ->
             append("<|im_start|>${msg.role}\n${msg.content ?: ""}")
-            if (msg.toolCalls != null) {
-                append("\nTool Calls: ${msg.toolCalls}")
+            val tCalls = msg.toolCalls
+            if (tCalls != null) {
+                append("\nTool Calls: $tCalls")
             }
             append("<|im_end|>\n")
         }
@@ -194,10 +188,9 @@ private fun buildOpenAiPrompt(
     }
 }
 
+@Suppress("UnusedParameter")
 private fun buildToolSchema(tools: List<Tool>): String {
-    // Explicitly use tools to avoid Detekt UnusedParameter
     if (tools.isEmpty()) return ""
-
     return """
         {
           "type": "object",
@@ -230,7 +223,7 @@ private fun parseToolResponse(jsonText: String): ChatMessage =
             toolCallsJson?.map {
                 val obj = it.jsonObject
                 ToolCall(
-                    id = "call_" + UUID.randomUUID().toString().take(UUID_SHORT_LENGTH),
+                    id = "call_" + Random.nextInt().toString().take(UUID_SHORT_LENGTH),
                     type = "function",
                     function =
                         FunctionCall(

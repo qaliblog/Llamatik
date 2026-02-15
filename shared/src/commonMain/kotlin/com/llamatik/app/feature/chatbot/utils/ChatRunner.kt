@@ -1,13 +1,13 @@
 package com.llamatik.app.feature.chatbot.utils
 
 import com.llamatik.library.platform.GenStream
-import com.llamatik.library.platform.LlamaBridge
+import com.llamatik.library.platform.LlamaService
 import kotlin.math.min
 
 /**
  * High-level chat orchestration:
  * - Renders the prompt with PromptRenderer (+ template + RAG).
- * - Streams tokens from LlamaBridge.generateStream.
+ * - Streams tokens from LlamaService.generateStream.
  * - Enforces client-side stop sequences consistently across apps.
  */
 object ChatRunner {
@@ -21,7 +21,7 @@ object ChatRunner {
      * @param template Which prompt surface to use (Gemma3 by default).
      * @param maxTokens Hard guard if your engine doesn't supply one.
      */
-    fun stream(
+    suspend fun stream(
         system: String? = null,
         contexts: List<String> = emptyList(),
         messages: List<ChatMessage>,
@@ -34,7 +34,7 @@ object ChatRunner {
         val prompt = PromptRenderer.render(system, contexts, messages, template)
         val stop = template.stopSequences
 
-        var acc = StringBuilder()
+        val acc = StringBuilder()
         var done = false
         var tokenCount = 0
 
@@ -79,7 +79,7 @@ object ChatRunner {
         }
 
         // Let the engine do its thing; we keep the semantics above it.
-        LlamaBridge.generateStream(prompt, guard)
+        LlamaService.generateStream(prompt, guard)
     }
 
     private fun shouldStop(sb: StringBuilder, stops: List<String>): Boolean {
