@@ -1,35 +1,57 @@
 package com.llamatik.routes
 
-import com.llamatik.api.*
+import com.llamatik.api.ChatChoice
+import com.llamatik.api.ChatCompletionRequest
+import com.llamatik.api.ChatCompletionResponse
+import com.llamatik.api.ChatMessage
+import com.llamatik.api.ChatUsage
+import com.llamatik.api.FunctionCall
+import com.llamatik.api.OllamaChatRequest
+import com.llamatik.api.OllamaChatResponse
+import com.llamatik.api.OllamaGenerateRequest
+import com.llamatik.api.OllamaGenerateResponse
+import com.llamatik.api.Tool
+import com.llamatik.api.ToolCall
 import com.llamatik.llama.LlamaService
 import com.llamatik.models.ModelConfig
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import java.util.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import java.util.UUID
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+private const val DEFAULT_MAX_TOKENS = 512
+private const val DEFAULT_TEMPERATURE = 1.0f
+private const val DEFAULT_TOP_P = 0.9f
+private const val DEFAULT_TOP_K = 40
+private const val DEFAULT_REPEAT_PENALTY = 1.1f
 
 fun Route.providerRoutes() {
+    openAiRoutes()
+    ollamaRoutes()
+}
 
-    // --- OpenAI Compatibility ---
-
+fun Route.openAiRoutes() {
     get("/v1/models") {
         call.respond(mapOf("data" to ModelConfig.recommendedModels))
     }
 
     post("/v1/chat/completions") {
         val req = call.receive<ChatCompletionRequest>()
-
         val prompt = buildOpenAiPrompt(req.messages, req.tools)
 
-        // Update params if provided
         req.temperature?.let { t ->
-            val maxTokens = req.maxTokens ?: 512
-            val topP = req.topP ?: 0.9f
-            LlamaService.updateGenerateParams(t, maxTokens, topP, 40, 1.1f)
+            val maxTokens = req.maxTokens ?: DEFAULT_MAX_TOKENS
+            val topP = req.topP ?: DEFAULT_TOP_P
+            LlamaService.updateGenerateParams(t, maxTokens, topP, DEFAULT_TOP_K, DEFAULT_REPEAT_PENALTY)
         }
 
         val res = if (req.tools != null && req.tools.isNotEmpty()) {
@@ -58,7 +80,7 @@ fun Route.providerRoutes() {
                             finishReason = if (message.toolCalls != null) "tool_calls" else "stop"
                         )
                     ),
-                    usage = ChatUsage(0, 0, 0) // Placeholder
+                    usage = ChatUsage(0, 0, 0)
                 )
                 call.respond(response)
             },
@@ -67,9 +89,9 @@ fun Route.providerRoutes() {
             }
         )
     }
+}
 
-    // --- Ollama Compatibility ---
-
+fun Route.ollamaRoutes() {
     post("/api/generate") {
         val req = call.receive<OllamaGenerateRequest>()
         val res = LlamaService.generate(req.prompt)
@@ -158,7 +180,6 @@ private fun buildOpenAiPrompt(messages: List<ChatMessage>, tools: List<Tool>? = 
 }
 
 private fun buildToolSchema(tools: List<Tool>): String {
-    // Basic schema to force the model to either give content or tool_calls
     return """
     {
       "type": "object",
@@ -180,6 +201,7 @@ private fun buildToolSchema(tools: List<Tool>): String {
     """.trimIndent()
 }
 
+@Suppress("TooGenericExceptionCaught", "SwallowedException")
 private fun parseToolResponse(jsonText: String): ChatMessage {
     return try {
         val json = Json.parseToJsonElement(jsonText).jsonObject

@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.withLock
  * The llama.cpp JNI integration is typically not re-entrant. This service
  * serializes calls that mutate or use the current generation session.
  */
+@Suppress("TooManyFunctions")
 object LlamaService {
 
     private val mutex = Mutex()

@@ -19,7 +19,6 @@ fun Application.configureAuthentication() {
     DatabaseFactory.init()
     val userRepository = UserRepositoryImp()
     val profileRepository = ProfileRepositoryImpl()
-    val embeddingRepository = EmbeddingRepositoryImpl()
     val jwtService = JwtService()
     val hashFunction = { s: String -> hash(s) }
 

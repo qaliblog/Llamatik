@@ -38,7 +38,7 @@ private const val GENERATION_CANCEL = "$GENERATION/cancel"
 /**
  * Mirrors the Llamatik library API for generation.
  */
-@Suppress("TooGenericExceptionCaught")
+@Suppress("TooGenericExceptionCaught", "LongMethod", "CyclomaticComplexMethod")
 fun Route.generationRoutes() {
 
     // --- initialization ---
