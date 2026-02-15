@@ -3,20 +3,9 @@ name: Build Backend
 on:
   push:
     branches: [ "**" ]
-    paths:
-      - 'backend/**'
-      - 'library/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle/**'
   pull_request:
     branches: [ "**" ]
-    paths:
-      - 'backend/**'
-      - 'library/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle/**'
+  workflow_dispatch:
 
 jobs:
   build:
