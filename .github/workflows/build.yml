@@ -1,4 +1,4 @@
-name: Build Backend
+name: Build Project
 
 on:
   push:
@@ -29,6 +29,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libtool libtool-bin cmake
 
+      - name: Create dummy google-services.json
+        run: echo '{"project_info":{"project_number":"123456789012","project_id":"llamatik-dummy","storage_bucket":"llamatik-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.llamatik.app.android"}},"oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > composeApp/google-services.json
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -38,8 +41,17 @@ jobs:
       - name: Build Shadow Jar
         run: ./gradlew :backend:shadowJar
 
+      - name: Build Android APK
+        run: ./gradlew :composeApp:assembleDebug
+
       - name: Upload Backend Artifact
         uses: actions/upload-artifact@v4
         with:
           name: llamatik-backend-jar
           path: backend/build/libs/*-all.jar
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llamatik-android-apk
+          path: composeApp/build/outputs/apk/debug/*.apk
