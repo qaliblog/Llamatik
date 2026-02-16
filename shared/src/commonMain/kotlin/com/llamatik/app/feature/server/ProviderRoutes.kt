@@ -24,7 +24,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 import kotlin.random.Random
 
 private const val DEFAULT_MAX_TOKENS = 512
@@ -35,7 +35,6 @@ private const val UUID_SHORT_LENGTH = 8
 private const val ZERO = 0
 private const val MS_PER_SEC = 1000
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 fun Route.openAiRoutes() {
     get("/v1/models") {
         call.respond(
@@ -45,7 +44,7 @@ fun Route.openAiRoutes() {
                     mapOf(
                         "id" to it.id,
                         "object" to "model",
-                        "created" to Clock.System.now().toEpochMilliseconds() / MS_PER_SEC,
+                        "created" to kotlinx.datetime.Clock.System.now().toEpochMilliseconds() / MS_PER_SEC,
                         "owned_by" to "llamatik"
                     )
                 }
@@ -79,7 +78,7 @@ fun Route.openAiRoutes() {
 
         val response = ChatCompletionResponse(
             id = "chatcmpl-" + Random.nextLong().toString(),
-            created = Clock.System.now().toEpochMilliseconds() / MS_PER_SEC,
+            created = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() / MS_PER_SEC,
             model = req.model,
             choices = listOf(
                 ChatChoice(
@@ -94,7 +93,6 @@ fun Route.openAiRoutes() {
     }
 }
 
-@OptIn(kotlin.time.ExperimentalTime::class)
 fun Route.ollamaRoutes() {
     get("/api/tags") {
         call.respond(
@@ -102,7 +100,7 @@ fun Route.ollamaRoutes() {
                 "models" to ModelConfig.recommendedModels.map {
                     mapOf(
                         "name" to it.id,
-                        "modified_at" to Clock.System.now().toString(),
+                        "modified_at" to kotlinx.datetime.Clock.System.now().toString(),
                         "size" to 0,
                         "digest" to "sha256:0",
                         "details" to mapOf("family" to "llama")
@@ -117,7 +115,7 @@ fun Route.ollamaRoutes() {
         val text = LlamaService.generate(req.prompt).getOrThrow()
         val response = OllamaGenerateResponse(
             model = req.model,
-            createdAt = Clock.System.now().toString(),
+            createdAt = kotlinx.datetime.Clock.System.now().toString(),
             response = text,
             done = true
         )
@@ -144,7 +142,7 @@ fun Route.ollamaRoutes() {
 
         val response = OllamaChatResponse(
             model = req.model,
-            createdAt = Clock.System.now().toString(),
+            createdAt = kotlinx.datetime.Clock.System.now().toString(),
             message = message,
             done = true
         )

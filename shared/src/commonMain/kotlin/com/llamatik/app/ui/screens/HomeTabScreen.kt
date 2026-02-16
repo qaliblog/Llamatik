@@ -22,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -56,6 +58,7 @@ import com.llamatik.app.resources.air_support_bro
 import com.llamatik.app.ui.components.EmptyLayout
 import com.llamatik.app.ui.components.LlamatikDialog
 import com.llamatik.app.ui.components.NewsCardSmall
+import com.llamatik.app.ui.icon.LlamatikIcons
 import com.llamatik.app.ui.screens.viewmodel.HomeScreenSideEffects
 import com.llamatik.app.ui.screens.viewmodel.HomeScreenState
 import com.llamatik.app.ui.screens.viewmodel.HomeScreenViewModel
@@ -163,6 +166,14 @@ class HomeTabScreen : Screen {
                             )
                         }
                     },
+                    actions = {
+                        IconButton(onClick = { viewModel.onDebugMenuClicked() }) {
+                            Icon(
+                                imageVector = LlamatikIcons.Settings,
+                                contentDescription = "Settings"
+                            )
+                        }
+                    }
                 )
             }
         ) { paddingValues ->

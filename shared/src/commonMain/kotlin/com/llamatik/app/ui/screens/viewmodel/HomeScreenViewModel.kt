@@ -7,7 +7,6 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import co.touchlab.kermit.Logger
-import com.llamatik.app.feature.debugmenu.DebugMenuScreen
 import com.llamatik.app.feature.debugmenu.repositories.GlobalAppSettingsRepository
 import com.llamatik.app.feature.news.NewsFeedDetailScreen
 import com.llamatik.app.feature.news.NewsFeedScreen
@@ -16,6 +15,7 @@ import com.llamatik.app.feature.news.usecases.GetAllNewsUseCase
 import com.llamatik.app.localization.AvailableLanguages
 import com.llamatik.app.localization.getCurrentLocalization
 import com.llamatik.app.platform.RootNavigatorRepository
+import com.llamatik.app.ui.screens.AppSettingsScreen
 import com.llamatik.app.ui.screens.OnboardingScreen
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.channels.Channel
@@ -25,9 +25,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private const val ONBOARDING_VIEWED_KEY = "onboarding_viewed_key"
@@ -99,7 +99,7 @@ class HomeScreenViewModel(
     }
 
     fun onDebugMenuClicked() {
-        rootNavigatorRepository.navigator.push(DebugMenuScreen())
+        rootNavigatorRepository.navigator.push(AppSettingsScreen())
     }
 
     fun onOpenFeedItemDetail(link: String) {

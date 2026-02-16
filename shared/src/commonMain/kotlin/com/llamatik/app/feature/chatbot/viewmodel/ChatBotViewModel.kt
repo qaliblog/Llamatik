@@ -45,11 +45,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import kotlin.concurrent.Volatile
-import kotlin.time.Clock.System
 import kotlin.time.ExperimentalTime
 
 private const val PRIVACY_CHATBOT_VIEWED_KEY = "privacy_chatbot_viewed_key"
@@ -130,9 +130,8 @@ class ChatBotViewModel(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun getGreeting(): String {
-        val currentTime = System.now()
+        val currentTime = Clock.System.now()
         val timeZone = TimeZone.currentSystemDefault()
         val localDateTime = currentTime.toLocalDateTime(timeZone)
 
@@ -173,12 +172,12 @@ class ChatBotViewModel(
 
         screenModelScope.launch(Dispatchers.IO) {
             embedFilePath?.let {
-                LlamaService.initModel(embedFilePath)
-                _state.value = _state.value.copy(isEmbedModelLoaded = true)
+                val res = LlamaService.initModel(embedFilePath)
+                _state.value = _state.value.copy(isEmbedModelLoaded = res.getOrDefault(false))
             }
             generatorFilePath?.let {
-                LlamaService.initGenerateModel(generatorFilePath)
-                _state.value = _state.value.copy(isGenerateModelLoaded = true)
+                val res = LlamaService.initGenerateModel(generatorFilePath)
+                _state.value = _state.value.copy(isGenerateModelLoaded = res.getOrDefault(false))
             }
 
             getAllNewsUseCase.invoke()
@@ -386,7 +385,7 @@ class ChatBotViewModel(
             updateDownload(url) { it.copy(inProgress = true, progress = progress) }
             _state.value = _state.value.copy(initialSetupProgress = progress)
         }.onSuccess { tempFile ->
-            Logger.d("LlamaVM - initial setup download finished for STT ${defaultModel.name}")
+            Logger.d("LlamaVM - initial setup STT download finished for STT ${defaultModel.name}")
             val path = tempFile.absolutePath()
 
             getModelsUseCase.saveModelPath(defaultModel.name, path)
@@ -1096,7 +1095,7 @@ class ChatBotViewModel(
         if (_state.value.isTemporaryChat) return
         val id = currentChatId ?: return
 
-        val now = System.now().toEpochMilliseconds()
+        val now = Clock.System.now().toEpochMilliseconds()
         val existing = chatHistoryRepository.getSession(id)
         val createdAt = existing?.createdAtEpochMs ?: now
         val title = existing?.title ?: buildTitle(

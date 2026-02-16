@@ -11,21 +11,37 @@ import kotlinx.coroutines.sync.withLock
  */
 object LlamaService {
     private val mutex = Mutex()
+    private var isModelLoaded = false
+    private var isGenerateModelLoaded = false
 
     suspend fun initModel(modelPath: String): Result<Boolean> = runCatching {
-        mutex.withLock { LlamaBridge.initModel(modelPath) }
+        mutex.withLock {
+            val res = LlamaBridge.initModel(modelPath)
+            isModelLoaded = res
+            res
+        }
     }
 
     suspend fun embed(input: String): Result<FloatArray> = runCatching {
-        mutex.withLock { LlamaBridge.embed(input) }
+        mutex.withLock {
+            if (!isModelLoaded) throw IllegalStateException("Model not loaded")
+            LlamaBridge.embed(input)
+        }
     }
 
     suspend fun initGenerateModel(modelPath: String): Result<Boolean> = runCatching {
-        mutex.withLock { LlamaBridge.initGenerateModel(modelPath) }
+        mutex.withLock {
+            val res = LlamaBridge.initGenerateModel(modelPath)
+            isGenerateModelLoaded = res
+            res
+        }
     }
 
     suspend fun generate(prompt: String): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generate(prompt) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generate(prompt)
+        }
     }
 
     suspend fun generateWithContext(
@@ -33,14 +49,20 @@ object LlamaService {
         contextBlock: String,
         userPrompt: String,
     ): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generateWithContext(systemPrompt, contextBlock, userPrompt) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generateWithContext(systemPrompt, contextBlock, userPrompt)
+        }
     }
 
     suspend fun generateJson(
         prompt: String,
         jsonSchema: String?,
     ): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generateJson(prompt, jsonSchema) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generateJson(prompt, jsonSchema)
+        }
     }
 
     suspend fun generateJsonWithContext(
@@ -49,7 +71,10 @@ object LlamaService {
         userPrompt: String,
         jsonSchema: String?,
     ): Result<String> = runCatching {
-        mutex.withLock { LlamaBridge.generateJsonWithContext(systemPrompt, contextBlock, userPrompt, jsonSchema) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generateJsonWithContext(systemPrompt, contextBlock, userPrompt, jsonSchema)
+        }
     }
 
     suspend fun updateGenerateParams(
@@ -60,6 +85,7 @@ object LlamaService {
         repeatPenalty: Float,
     ): Result<Unit> = runCatching {
         mutex.withLock {
+            if (!isGenerateModelLoaded) return@runCatching // Silently ignore if not loaded yet
             LlamaBridge.updateGenerateParams(
                 temperature = temperature,
                 maxTokens = maxTokens,
@@ -71,7 +97,10 @@ object LlamaService {
     }
 
     suspend fun generateStream(prompt: String, callback: GenStream): Result<Unit> = runCatching {
-        mutex.withLock { LlamaBridge.generateStream(prompt, callback) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generateStream(prompt, callback)
+        }
     }
 
     suspend fun generateStreamWithContext(
@@ -80,11 +109,17 @@ object LlamaService {
         userPrompt: String,
         callback: GenStream
     ): Result<Unit> = runCatching {
-        mutex.withLock { LlamaBridge.generateStreamWithContext(systemPrompt, contextBlock, userPrompt, callback) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generateStreamWithContext(systemPrompt, contextBlock, userPrompt, callback)
+        }
     }
 
     suspend fun generateJsonStream(prompt: String, jsonSchema: String?, callback: GenStream): Result<Unit> = runCatching {
-        mutex.withLock { LlamaBridge.generateJsonStream(prompt, jsonSchema, callback) }
+        mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
+            LlamaBridge.generateJsonStream(prompt, jsonSchema, callback)
+        }
     }
 
     suspend fun generateJsonStreamWithContext(
@@ -95,6 +130,7 @@ object LlamaService {
         callback: GenStream
     ): Result<Unit> = runCatching {
         mutex.withLock {
+            if (!isGenerateModelLoaded) throw IllegalStateException("Generate model not loaded")
             LlamaBridge.generateJsonStreamWithContext(systemPrompt, contextBlock, userPrompt, jsonSchema, callback)
         }
     }
@@ -107,6 +143,10 @@ object LlamaService {
     }
 
     suspend fun shutdown(): Result<Unit> = runCatching {
-        mutex.withLock { LlamaBridge.shutdown() }
+        mutex.withLock {
+            LlamaBridge.shutdown()
+            isModelLoaded = false
+            isGenerateModelLoaded = false
+        }
     }
 }

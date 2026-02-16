@@ -3,7 +3,7 @@ package com.llamatik.app.feature.reviews
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.time.Clock
+import kotlinx.datetime.Clock
 import kotlin.time.ExperimentalTime
 
 /**
@@ -88,7 +88,7 @@ class ReviewRequestManager(
         return true
     }
 
-    private fun nowMillis(): Long = Clock.System.now().toEpochMilliseconds()
+    private fun nowMillis(): Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
 
     private companion object {
         // Settings keys
