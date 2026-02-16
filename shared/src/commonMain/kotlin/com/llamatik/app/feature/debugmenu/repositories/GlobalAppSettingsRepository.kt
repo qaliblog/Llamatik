@@ -10,6 +10,9 @@ const val ENVIRONMENT_KEY = "ENVIRONMENT_KEY"
 const val LANGUAGE_KEY = "LANGUAGE_KEY"
 const val MOCKED_CONTENT_KEY = "MOCKED_CONTENT_KEY"
 const val MOCKED_USER_KEY = "MOCKED_USER_KEY"
+const val SERVER_PORT_KEY = "SERVER_PORT_KEY"
+const val SERVER_PROVIDER_KEY = "SERVER_PROVIDER_KEY"
+const val SERVER_ENABLED_KEY = "SERVER_ENABLED_KEY"
 
 class GlobalAppSettingsRepository(
     private val settings: Settings,
@@ -62,5 +65,29 @@ class GlobalAppSettingsRepository(
 
     fun isMockedUserEnabled(): Boolean {
         return settings.getBoolean(MOCKED_USER_KEY, false)
+    }
+
+    fun getServerPort(): Int {
+        return settings.getInt(SERVER_PORT_KEY, 8080)
+    }
+
+    fun setServerPort(port: Int) {
+        settings.putInt(SERVER_PORT_KEY, port)
+    }
+
+    fun getServerProvider(): String {
+        return settings.getString(SERVER_PROVIDER_KEY, "BOTH")
+    }
+
+    fun setServerProvider(provider: String) {
+        settings.putString(SERVER_PROVIDER_KEY, provider)
+    }
+
+    fun isServerEnabled(): Boolean {
+        return settings.getBoolean(SERVER_ENABLED_KEY, false)
+    }
+
+    fun setServerEnabled(enabled: Boolean) {
+        settings.putBoolean(SERVER_ENABLED_KEY, enabled)
     }
 }

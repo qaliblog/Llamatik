@@ -98,7 +98,7 @@ class HomeScreenViewModel(
         }
     }
 
-    fun onDebugMenuClicked() {
+    fun onSettingsClicked() {
         rootNavigatorRepository.navigator.push(AppSettingsScreen())
     }
 

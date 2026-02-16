@@ -167,7 +167,7 @@ class HomeTabScreen : Screen {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { viewModel.onDebugMenuClicked() }) {
+                        IconButton(onClick = { viewModel.onSettingsClicked() }) {
                             Icon(
                                 imageVector = LlamatikIcons.Settings,
                                 contentDescription = "Settings"

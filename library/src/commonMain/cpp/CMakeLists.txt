@@ -7,6 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # DO NOT force CMAKE_BUILD_TYPE here; Android/Gradle controls it.
 
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-O3 -ffast-math)
+    message(STATUS "Native optimizations enabled (-O3 -ffast-math)")
+endif()
+
 # Path to vendored llama.cpp inside the repo
 set(LLAMA_CPP_DIR "${CMAKE_SOURCE_DIR}/../../../../llama.cpp")
 
@@ -76,3 +81,10 @@ target_link_libraries(
         whisper
         ${log-lib}
 )
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT result OUTPUT output)
+if(result)
+    set_target_properties(llama_jni PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    message(STATUS "LTO/IPO enabled for llama_jni")
+endif()

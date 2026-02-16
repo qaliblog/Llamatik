@@ -11,7 +11,7 @@ import com.llamatik.app.feature.chatbot.repositories.ModelsRepository
 import com.llamatik.app.feature.chatbot.usecases.GetModelsUseCase
 import com.llamatik.app.feature.chatbot.viewmodel.ChatBotViewModel
 import com.llamatik.app.feature.debugmenu.repositories.GlobalAppSettingsRepository
-import com.llamatik.app.feature.debugmenu.viewmodel.DebugMenuViewModel
+import com.llamatik.app.feature.debugmenu.viewmodel.AppSettingsViewModel
 import com.llamatik.app.feature.news.repositories.NewsRepository
 import com.llamatik.app.feature.news.usecases.GetAllNewsUseCase
 import com.llamatik.app.feature.news.viewmodel.FeedItemDetailViewModel
@@ -48,7 +48,7 @@ val commonModule = module {
     }
 
     factory {
-        DebugMenuViewModel(get())
+        AppSettingsViewModel(get())
     }
 
     factory { (url: String) ->

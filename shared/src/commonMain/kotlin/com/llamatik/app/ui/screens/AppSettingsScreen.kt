@@ -46,8 +46,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.llamatik.app.feature.debugmenu.viewmodel.DebugMenuSideEffects
-import com.llamatik.app.feature.debugmenu.viewmodel.DebugMenuViewModel
+import com.llamatik.app.feature.debugmenu.viewmodel.AppSettingsSideEffects
+import com.llamatik.app.feature.debugmenu.viewmodel.AppSettingsViewModel
 import com.llamatik.app.feature.server.ServerProvider
 import com.llamatik.app.localization.AvailableLanguages
 import com.llamatik.app.localization.SetLanguage
@@ -70,10 +70,10 @@ class AppSettingsScreen : Screen {
             val snackbarHostState = remember { SnackbarHostState() }
             val showingModal = remember { mutableStateOf(false) }
 
-            val viewModel = koinScreenModel<DebugMenuViewModel>()
+            val viewModel = koinScreenModel<AppSettingsViewModel>()
 
             SetupSideEffects(viewModel)
-            DebugMenuView(viewModel, snackbarHostState, showingModal) {
+            AppSettingsContentView(viewModel, snackbarHostState, showingModal) {
                 currentNavigator.pop()
             }
         }
@@ -81,21 +81,21 @@ class AppSettingsScreen : Screen {
 
     @Composable
     private fun SetupSideEffects(
-        viewModel: DebugMenuViewModel
+        viewModel: AppSettingsViewModel
     ) {
         val coroutineScope = rememberCoroutineScope()
         val sideEffects = viewModel.sideEffects.collectAsState(
-            DebugMenuSideEffects.Initial,
+            AppSettingsSideEffects.Initial,
             coroutineScope.coroutineContext
         )
         when (sideEffects.value) {
-            DebugMenuSideEffects.Initial -> {}
+            AppSettingsSideEffects.Initial -> {}
         }
     }
 
     @Composable
-    fun DebugMenuView(
-        viewModel: DebugMenuViewModel,
+    fun AppSettingsContentView(
+        viewModel: AppSettingsViewModel,
         snackbarHostState: SnackbarHostState,
         showingModal: MutableState<Boolean>,
         onClose: () -> Unit
