@@ -30,7 +30,7 @@ jobs:
           sudo apt-get install -y libtool libtool-bin cmake
 
       - name: Create dummy google-services.json
-        run: echo '{"project_info":{"project_number":"123456789012","project_id":"llamatik-dummy","storage_bucket":"llamatik-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.llamatik.app.android"}},"oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > composeApp/google-services.json
+        run: echo '{"project_info":{"project_number":"123456789012","project_id":"llamatik-dummy","storage_bucket":"llamatik-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0123456789abcdef","android_client_info":{"package_name":"com.llamatik.app.android"}},"oauth_client":[],"api_key":[{"current_key":"dummy_api_key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],"configuration_version":"1"}' > composeApp/google-services.json
 
       - name: Create dummy vector store
         run: |
